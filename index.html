@@ -3,21 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>my wardrobe</title>
+<title>hit fits</title>
 <style>
   :root {
-    --bg: #FAF8F5;
-    --bg2: #F2EDE8;
-    --bg3: #E8E1D9;
-    --card: #FFFFFF;
-    --text: #1C1A18;
-    --text2: #6B6460;
-    --text3: #A09890;
+    --bg: #0d1017;
+    --bg2: #161b24;
+    --bg3: #1e2533;
+    --card: #161b24;
+    --text: #f0eeeb;
+    --text2: #8a9ab5;
+    --text3: #4e5d75;
     --accent: #C4714A;
-    --accent-light: #F5E6DC;
-    --accent-dark: #9B5235;
-    --border: rgba(28,26,24,0.10);
-    --border2: rgba(28,26,24,0.16);
+    --accent-light: rgba(196,113,74,0.18);
+    --accent-dark: #e8956e;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
     --radius: 14px;
     --radius-sm: 8px;
     --comfort-5: #4A9B6F;
@@ -105,7 +105,7 @@
   .field-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; display: block; font-weight: 500; }
   .field-input { width: 100%; padding: 11px 13px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--card); color: var(--text); font-size: 15px; font-family: inherit; -webkit-appearance: none; }
   .field-input:focus { outline: none; border-color: var(--accent); }
-  select.field-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6460' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  select.field-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a9ab5' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .comfort-picker { display: flex; gap: 8px; }
   .comfort-opt { flex: 1; padding: 10px 4px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--card); text-align: center; font-size: 13px; cursor: pointer; transition: all 0.12s; }
@@ -174,7 +174,7 @@
 <!-- SCREENS -->
 <div id="screen-outfits">
   <div class="header">
-    <h1>my wardrobe</h1>
+    <h1>hit fits</h1>
     <p id="outfit-count-label">0 outfits logged</p>
   </div>
 
@@ -413,7 +413,7 @@
         <label class="field-label">main colours (tap to select)</label>
         <div class="color-dots" id="color-picker">
           <div class="color-dot" data-color="black" style="background:#1C1A18;" title="black"></div>
-          <div class="color-dot" data-color="white" style="background:#F5F3EF; border:1px solid #ddd;" title="white"></div>
+          <div class="color-dot" data-color="white" style="background:#2a3244; border:1px solid rgba(255,255,255,0.15);" title="white"></div>
           <div class="color-dot" data-color="cream" style="background:#F0E8D5;" title="cream"></div>
           <div class="color-dot" data-color="grey" style="background:#9B9590;" title="grey"></div>
           <div class="color-dot" data-color="brown" style="background:#7B5B3A;" title="brown"></div>
