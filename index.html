@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>my wardrobe</title>
+<style>
+  :root {
+    --bg: #FAF8F5;
+    --bg2: #F2EDE8;
+    --bg3: #E8E1D9;
+    --card: #FFFFFF;
+    --text: #1C1A18;
+    --text2: #6B6460;
+    --text3: #A09890;
+    --accent: #C4714A;
+    --accent-light: #F5E6DC;
+    --accent-dark: #9B5235;
+    --border: rgba(28,26,24,0.10);
+    --border2: rgba(28,26,24,0.16);
+    --radius: 14px;
+    --radius-sm: 8px;
+    --comfort-5: #4A9B6F;
+    --comfort-4: #7AB648;
+    --comfort-3: #E8B84B;
+    --comfort-2: #E07C3A;
+    --comfort-1: #C4534A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, 'Helvetica Neue', sans-serif; min-height: 100vh; max-width: 480px; margin: 0 auto; padding-bottom: 90px; }
+
+  /* NAV */
+  .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--card); border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 0 8px; border: none; background: none; color: var(--text3); font-size: 10px; letter-spacing: 0.04em; cursor: pointer; transition: color 0.15s; }
+  .nav-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .nav-btn.active { color: var(--accent); }
+
+  /* HEADER */
+  .header { padding: 56px 20px 16px; }
+  .header h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; }
+  .header p { font-size: 14px; color: var(--text2); margin-top: 3px; }
+
+  /* MORNING MODE BANNER */
+  .morning-banner { margin: 0 16px 16px; background: var(--accent); border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .morning-banner-icon { font-size: 24px; }
+  .morning-banner-text { flex: 1; }
+  .morning-banner-text strong { color: white; font-size: 15px; display: block; }
+  .morning-banner-text span { color: rgba(255,255,255,0.75); font-size: 12px; }
+  .morning-banner-arrow { color: rgba(255,255,255,0.7); font-size: 18px; }
+
+  /* FILTERS */
+  .filter-section { padding: 0 16px 12px; }
+  .filter-label { font-size: 11px; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+  .filter-scroll { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .filter-scroll::-webkit-scrollbar { display: none; }
+  .chip { flex-shrink: 0; font-size: 13px; padding: 6px 13px; border-radius: 20px; border: 1px solid var(--border2); background: var(--card); color: var(--text2); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* OUTFIT GRID */
+  .section-header { display: flex; align-items: baseline; justify-content: space-between; padding: 4px 16px 10px; }
+  .section-title { font-size: 13px; font-weight: 500; color: var(--text2); }
+  .section-count { font-size: 12px; color: var(--text3); }
+  .outfit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px; }
+  .outfit-card { background: var(--card); border-radius: var(--radius); overflow: hidden; cursor: pointer; border: 1px solid var(--border); position: relative; transition: transform 0.12s; }
+  .outfit-card:active { transform: scale(0.97); }
+  .outfit-photo { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; background: var(--bg2); position: relative; }
+  .outfit-photo-placeholder { width: 100%; aspect-ratio: 3/4; background: var(--bg2); display: flex; align-items: center; justify-content: center; }
+  .outfit-photo-placeholder svg { width: 32px; height: 32px; stroke: var(--text3); fill: none; stroke-width: 1.4; }
+  .comfort-bar { height: 4px; width: 100%; }
+  .outfit-info { padding: 9px 10px 10px; }
+  .outfit-name { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .outfit-detail { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .outfit-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+  .otag { font-size: 10px; padding: 2px 7px; border-radius: 10px; background: var(--bg2); color: var(--text2); }
+  .outfit-worn-badge { position: absolute; top: 8px; right: 8px; background: rgba(28,26,24,0.55); color: white; font-size: 10px; padding: 3px 8px; border-radius: 10px; backdrop-filter: blur(4px); }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 48px 32px; }
+  .empty-state svg { width: 48px; height: 48px; stroke: var(--text3); fill: none; stroke-width: 1.2; margin: 0 auto 12px; display: block; }
+  .empty-state h3 { font-size: 16px; font-weight: 500; margin-bottom: 6px; }
+  .empty-state p { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+  /* FAB */
+  .fab { position: fixed; bottom: 72px; right: 20px; width: 52px; height: 52px; border-radius: 50%; background: var(--accent); border: none; color: white; font-size: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(196,113,74,0.4); z-index: 99; transition: transform 0.15s; }
+  .fab:active { transform: scale(0.93); }
+
+  /* MODAL OVERLAY */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: flex; flex-direction: column; justify-content: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--bg); border-radius: 20px 20px 0 0; max-height: 93vh; overflow-y: auto; padding-bottom: env(safe-area-inset-bottom); transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.32,0.72,0,1); }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 12px auto 0; }
+  .modal-header { padding: 16px 20px 12px; display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-size: 18px; font-weight: 600; }
+  .modal-close { width: 30px; height: 30px; border-radius: 50%; background: var(--bg2); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text2); }
+  .modal-body { padding: 0 20px 32px; }
+
+  /* FORM */
+  .photo-upload-area { width: 100%; aspect-ratio: 3/4; max-height: 240px; background: var(--bg2); border-radius: var(--radius); border: 1.5px dashed var(--border2); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-bottom: 20px; position: relative; overflow: hidden; }
+  .photo-upload-area img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .photo-upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .photo-upload-area svg { width: 32px; height: 32px; stroke: var(--text3); fill: none; stroke-width: 1.4; position: relative; z-index: 1; }
+  .photo-upload-area span { font-size: 13px; color: var(--text3); position: relative; z-index: 1; }
+  .field-group { margin-bottom: 16px; }
+  .field-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; display: block; font-weight: 500; }
+  .field-input { width: 100%; padding: 11px 13px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--card); color: var(--text); font-size: 15px; font-family: inherit; -webkit-appearance: none; }
+  .field-input:focus { outline: none; border-color: var(--accent); }
+  select.field-input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6460' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .comfort-picker { display: flex; gap: 8px; }
+  .comfort-opt { flex: 1; padding: 10px 4px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: var(--card); text-align: center; font-size: 13px; cursor: pointer; transition: all 0.12s; }
+  .comfort-opt.sel { color: white; border-color: transparent; font-weight: 500; }
+  .comfort-opt[data-v="1"].sel { background: var(--comfort-1); }
+  .comfort-opt[data-v="2"].sel { background: var(--comfort-2); }
+  .comfort-opt[data-v="3"].sel { background: var(--comfort-3); }
+  .comfort-opt[data-v="4"].sel { background: var(--comfort-4); }
+  .comfort-opt[data-v="5"].sel { background: var(--comfort-5); }
+  .color-dots { display: flex; gap: 8px; flex-wrap: wrap; }
+  .color-dot { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.12s; }
+  .color-dot.sel { border-color: var(--text); }
+  .tag-input-wrap { display: flex; gap: 8px; }
+  .tag-input-wrap .field-input { flex: 1; }
+  .tag-add-btn { padding: 11px 14px; background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius-sm); cursor: pointer; font-size: 18px; color: var(--text2); }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tag-pill { font-size: 12px; padding: 4px 10px; background: var(--accent-light); color: var(--accent-dark); border-radius: 20px; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+  .save-btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: var(--radius); font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; transition: background 0.15s; }
+  .save-btn:active { background: var(--accent-dark); }
+  .section-divider { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.07em; padding: 20px 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+
+  /* PIECES TAB */
+  .pieces-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+  .piece-card { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 13px 14px; display: flex; align-items: center; gap: 12px; }
+  .piece-rank { width: 28px; height: 28px; border-radius: 50%; background: var(--accent-light); color: var(--accent-dark); font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .piece-info { flex: 1; min-width: 0; }
+  .piece-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .piece-cat { font-size: 11px; color: var(--text3); margin-top: 1px; }
+  .piece-bar-wrap { margin-top: 6px; height: 4px; background: var(--bg2); border-radius: 2px; overflow: hidden; }
+  .piece-bar { height: 100%; background: var(--accent); border-radius: 2px; }
+  .piece-count { font-size: 13px; font-weight: 500; color: var(--accent); flex-shrink: 0; }
+
+  /* MORNING MODE */
+  .morning-mode { padding: 0 16px; }
+  .morning-q { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; }
+  .morning-q-label { font-size: 12px; color: var(--text2); font-weight: 500; margin-bottom: 10px; display: block; }
+  .morning-opts { display: flex; gap: 8px; flex-wrap: wrap; }
+  .morning-opt { padding: 8px 14px; border-radius: 20px; border: 1px solid var(--border2); background: var(--bg); font-size: 13px; color: var(--text2); cursor: pointer; transition: all 0.12s; }
+  .morning-opt.sel { background: var(--accent); color: white; border-color: var(--accent); }
+  .morning-results-label { font-size: 13px; color: var(--text2); padding: 4px 0 10px; font-weight: 500; }
+
+  /* OUTFIT DETAIL */
+  .detail-photo { width: 100%; aspect-ratio: 3/4; object-fit: cover; background: var(--bg2); }
+  .detail-body { padding: 20px; }
+  .detail-name { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+  .detail-date { font-size: 13px; color: var(--text3); margin-top: 3px; }
+  .detail-comfort { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .detail-field { background: var(--bg2); border-radius: var(--radius-sm); padding: 10px 12px; }
+  .detail-field-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+  .detail-field-value { font-size: 14px; font-weight: 500; }
+  .detail-notes { background: var(--bg2); border-radius: var(--radius-sm); padding: 10px 12px; margin-top: 10px; font-size: 14px; color: var(--text2); line-height: 1.5; }
+  .detail-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .delete-btn { width: 100%; padding: 12px; background: transparent; color: #C4534A; border: 1px solid rgba(196,83,74,0.3); border-radius: var(--radius); font-size: 14px; cursor: pointer; margin-top: 20px; }
+
+  /* TABS (for screens with sub-sections) */
+  .tab-bar { display: flex; gap: 0; background: var(--bg2); border-radius: 10px; padding: 3px; margin: 0 16px 16px; }
+  .tab-btn { flex: 1; padding: 8px; border: none; background: none; font-size: 13px; color: var(--text2); border-radius: 7px; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+  .tab-btn.active { background: var(--card); color: var(--text); font-weight: 500; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- SCREENS -->
+<div id="screen-outfits">
+  <div class="header">
+    <h1>my wardrobe</h1>
+    <p id="outfit-count-label">0 outfits logged</p>
+  </div>
+
+  <div class="morning-banner" onclick="openMorning()">
+    <div class="morning-banner-icon">🌤️</div>
+    <div class="morning-banner-text">
+      <strong>what should i wear?</strong>
+      <span>find the right look for today</span>
+    </div>
+    <div class="morning-banner-arrow">›</div>
+  </div>
+
+  <div class="filter-section">
+    <div class="filter-label">filter by weather</div>
+    <div class="filter-scroll" id="weather-filters">
+      <button class="chip active" data-filter="weather" data-val="">all</button>
+      <button class="chip" data-filter="weather" data-val="hot">☀️ hot</button>
+      <button class="chip" data-filter="weather" data-val="warm">🌤️ warm</button>
+      <button class="chip" data-filter="weather" data-val="mild">🌥️ mild</button>
+      <button class="chip" data-filter="weather" data-val="cool">🍃 cool</button>
+      <button class="chip" data-filter="weather" data-val="cold">🧥 cold</button>
+      <button class="chip" data-filter="weather" data-val="rainy">🌧️ rainy</button>
+    </div>
+  </div>
+
+  <div class="filter-section">
+    <div class="filter-label">filter by occasion</div>
+    <div class="filter-scroll" id="occasion-filters">
+      <button class="chip active" data-filter="occasion" data-val="">all</button>
+      <button class="chip" data-filter="occasion" data-val="work">work</button>
+      <button class="chip" data-filter="occasion" data-val="casual">casual</button>
+      <button class="chip" data-filter="occasion" data-val="going out">going out</button>
+      <button class="chip" data-filter="occasion" data-val="smart casual">smart casual</button>
+      <button class="chip" data-filter="occasion" data-val="cosy">cosy</button>
+      <button class="chip" data-filter="occasion" data-val="active">active</button>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <span class="section-title">your looks</span>
+    <span class="section-count" id="filtered-count"></span>
+  </div>
+
+  <div class="outfit-grid" id="outfit-grid">
+    <!-- populated by JS -->
+  </div>
+
+  <div id="empty-outfits" class="empty-state hidden">
+    <svg viewBox="0 0 24 24"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg>
+    <h3>no outfits yet</h3>
+    <p>tap the + button to log your first look. next time you wear something you love, capture it here.</p>
+  </div>
+
+  <div id="empty-filter" class="empty-state hidden">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <h3>no matches</h3>
+    <p>no outfits match those filters. try a different combination.</p>
+  </div>
+</div>
+
+<div id="screen-pieces" class="hidden">
+  <div class="header">
+    <h1>pieces</h1>
+    <p>what's doing the work in your wardrobe</p>
+  </div>
+  <div class="pieces-list" id="pieces-list">
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      <h3>nothing yet</h3>
+      <p>once you log outfits with tops, bottoms, and shoes filled in, your most-worn pieces will appear here.</p>
+    </div>
+  </div>
+</div>
+
+<div id="screen-morning" class="hidden">
+  <div class="header">
+    <h1>what should i wear?</h1>
+    <p>tell me about today</p>
+  </div>
+  <div class="morning-mode">
+    <div class="morning-q">
+      <span class="morning-q-label">what's the weather like?</span>
+      <div class="morning-opts" id="m-weather">
+        <button class="morning-opt" data-g="weather" data-v="hot">☀️ hot</button>
+        <button class="morning-opt" data-g="weather" data-v="warm">🌤️ warm</button>
+        <button class="morning-opt" data-g="weather" data-v="mild">🌥️ mild</button>
+        <button class="morning-opt" data-g="weather" data-v="cool">🍃 cool</button>
+        <button class="morning-opt" data-g="weather" data-v="cold">🧥 cold</button>
+        <button class="morning-opt" data-g="weather" data-v="rainy">🌧️ rainy</button>
+      </div>
+    </div>
+    <div class="morning-q">
+      <span class="morning-q-label">what's the occasion?</span>
+      <div class="morning-opts" id="m-occasion">
+        <button class="morning-opt" data-g="occasion" data-v="work">work</button>
+        <button class="morning-opt" data-g="occasion" data-v="casual">casual</button>
+        <button class="morning-opt" data-g="occasion" data-v="going out">going out</button>
+        <button class="morning-opt" data-g="occasion" data-v="smart casual">smart casual</button>
+        <button class="morning-opt" data-g="occasion" data-v="cosy">cosy</button>
+        <button class="morning-opt" data-g="occasion" data-v="active">active</button>
+      </div>
+    </div>
+    <div class="morning-q">
+      <span class="morning-q-label">comfort priority?</span>
+      <div class="morning-opts" id="m-comfort">
+        <button class="morning-opt" data-g="comfort" data-v="any">any</button>
+        <button class="morning-opt" data-g="comfort" data-v="high">high comfort only</button>
+      </div>
+    </div>
+    <div id="morning-results-wrap" class="hidden">
+      <div class="morning-results-label" id="morning-results-label"></div>
+      <div class="outfit-grid" id="morning-grid"></div>
+      <div id="morning-empty" class="empty-state hidden">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <h3>no matches yet</h3>
+        <p>no outfits match today's conditions. log more looks and they'll show up here.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="showScreen('outfits',this)" id="nav-outfits">
+    <svg viewBox="0 0 24 24"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg>
+    outfits
+  </button>
+  <button class="nav-btn" onclick="showScreen('pieces',this)" id="nav-pieces">
+    <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    pieces
+  </button>
+  <button class="nav-btn" onclick="openMorning()" id="nav-morning">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    today
+  </button>
+</nav>
+
+<!-- FAB -->
+<button class="fab" onclick="openLog()" aria-label="Log new outfit">+</button>
+
+<!-- LOG OUTFIT MODAL -->
+<div class="modal-overlay" id="log-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">log this look</span>
+      <button class="modal-close" onclick="closeModal('log-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="photo-upload-area" id="upload-area">
+        <input type="file" accept="image/*" id="photo-input" onchange="handlePhoto(this)">
+        <svg viewBox="0 0 24 24" id="upload-icon"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span id="upload-text">tap to add photo</span>
+        <img id="preview-img" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:12px;">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">name or occasion</label>
+        <input class="field-input" type="text" id="f-name" placeholder="e.g. work Tuesday, dinner at Twilight..." />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">how comfortable did you feel? (1 = rough, 5 = perfect)</label>
+        <div class="comfort-picker">
+          <div class="comfort-opt" data-v="1" onclick="pickComfort(1)">1</div>
+          <div class="comfort-opt" data-v="2" onclick="pickComfort(2)">2</div>
+          <div class="comfort-opt" data-v="3" onclick="pickComfort(3)">3</div>
+          <div class="comfort-opt" data-v="4" onclick="pickComfort(4)">4</div>
+          <div class="comfort-opt sel" data-v="5" onclick="pickComfort(5)">5 ✓</div>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">weather</label>
+          <select class="field-input" id="f-weather">
+            <option value="hot">☀️ hot</option>
+            <option value="warm">🌤️ warm</option>
+            <option value="mild" selected>🌥️ mild</option>
+            <option value="cool">🍃 cool</option>
+            <option value="cold">🧥 cold</option>
+            <option value="rainy">🌧️ rainy</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label">occasion</label>
+          <select class="field-input" id="f-occasion">
+            <option value="casual">casual</option>
+            <option value="work">work</option>
+            <option value="smart casual">smart casual</option>
+            <option value="going out">going out</option>
+            <option value="cosy">cosy</option>
+            <option value="active">active</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-divider">pieces in this outfit</div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">top</label>
+          <input class="field-input piece-input" type="text" id="f-top" data-cat="top" placeholder="white linen blouse" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">bottom</label>
+          <input class="field-input piece-input" type="text" id="f-bottom" data-cat="bottom" placeholder="wide leg jeans" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">shoes</label>
+          <input class="field-input piece-input" type="text" id="f-shoes" data-cat="shoes" placeholder="white sneakers" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">outerwear</label>
+          <input class="field-input piece-input" type="text" id="f-outer" data-cat="outerwear" placeholder="beige trench" />
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">bag</label>
+          <input class="field-input piece-input" type="text" id="f-bag" data-cat="bag" placeholder="tote / clutch" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">accessories</label>
+          <input class="field-input piece-input" type="text" id="f-acc" data-cat="accessories" placeholder="gold hoops, watch" />
+        </div>
+      </div>
+
+      <div class="section-divider">colour palette</div>
+
+      <div class="field-group">
+        <label class="field-label">main colours (tap to select)</label>
+        <div class="color-dots" id="color-picker">
+          <div class="color-dot" data-color="black" style="background:#1C1A18;" title="black"></div>
+          <div class="color-dot" data-color="white" style="background:#F5F3EF; border:1px solid #ddd;" title="white"></div>
+          <div class="color-dot" data-color="cream" style="background:#F0E8D5;" title="cream"></div>
+          <div class="color-dot" data-color="grey" style="background:#9B9590;" title="grey"></div>
+          <div class="color-dot" data-color="brown" style="background:#7B5B3A;" title="brown"></div>
+          <div class="color-dot" data-color="navy" style="background:#1B2A4A;" title="navy"></div>
+          <div class="color-dot" data-color="blue" style="background:#4A7FB5;" title="blue"></div>
+          <div class="color-dot" data-color="green" style="background:#4A7B5A;" title="green"></div>
+          <div class="color-dot" data-color="rust" style="background:#C4714A;" title="rust"></div>
+          <div class="color-dot" data-color="red" style="background:#C4534A;" title="red"></div>
+          <div class="color-dot" data-color="pink" style="background:#D4789A;" title="pink"></div>
+          <div class="color-dot" data-color="yellow" style="background:#E8C84B;" title="yellow"></div>
+          <div class="color-dot" data-color="purple" style="background:#7B5BAA;" title="purple"></div>
+        </div>
+      </div>
+
+      <div class="section-divider">extra details</div>
+
+      <div class="field-group">
+        <label class="field-label">extra tags</label>
+        <div class="tag-input-wrap">
+          <input class="field-input" type="text" id="tag-input" placeholder="e.g. oversized, monochrome, layered" />
+          <button class="tag-add-btn" onclick="addTag()">+</button>
+        </div>
+        <div class="tag-list" id="tag-list"></div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">notes</label>
+        <input class="field-input" type="text" id="f-notes" placeholder="got compliments, wore again, felt off..." />
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">would you wear this again?</label>
+        <select class="field-input" id="f-repeat">
+          <option value="yes">yes, definitely</option>
+          <option value="maybe">maybe, tweaked</option>
+          <option value="no">no, not again</option>
+        </select>
+      </div>
+
+      <button class="save-btn" onclick="saveOutfit()">save this look</button>
+    </div>
+  </div>
+</div>
+
+<!-- OUTFIT DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header" style="position:absolute; top:0; left:0; right:0; background:transparent; z-index:10;">
+      <span></span>
+      <button class="modal-close" onclick="closeModal('detail-modal')" style="background:rgba(255,255,255,0.85);">✕</button>
+    </div>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- MORNING MODE MODAL -->
+<div class="modal-overlay" id="morning-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">what should i wear?</span>
+      <button class="modal-close" onclick="closeModal('morning-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="morning-q">
+        <span class="morning-q-label">weather today?</span>
+        <div class="morning-opts" id="mm-weather">
+          <button class="morning-opt" data-g="weather" data-v="hot">☀️ hot</button>
+          <button class="morning-opt" data-g="weather" data-v="warm">🌤️ warm</button>
+          <button class="morning-opt" data-g="weather" data-v="mild">🌥️ mild</button>
+          <button class="morning-opt" data-g="weather" data-v="cool">🍃 cool</button>
+          <button class="morning-opt" data-g="weather" data-v="cold">🧥 cold</button>
+          <button class="morning-opt" data-g="weather" data-v="rainy">🌧️ rainy</button>
+        </div>
+      </div>
+      <div class="morning-q">
+        <span class="morning-q-label">what's on today?</span>
+        <div class="morning-opts" id="mm-occasion">
+          <button class="morning-opt" data-g="occasion" data-v="work">work</button>
+          <button class="morning-opt" data-g="occasion" data-v="casual">casual</button>
+          <button class="morning-opt" data-g="occasion" data-v="going out">going out</button>
+          <button class="morning-opt" data-g="occasion" data-v="smart casual">smart casual</button>
+          <button class="morning-opt" data-g="occasion" data-v="cosy">cosy</button>
+          <button class="morning-opt" data-g="occasion" data-v="active">active</button>
+        </div>
+      </div>
+      <div class="morning-q">
+        <span class="morning-q-label">comfort priority?</span>
+        <div class="morning-opts" id="mm-comfort">
+          <button class="morning-opt sel" data-g="comfort" data-v="any">any</button>
+          <button class="morning-opt" data-g="comfort" data-v="high">high comfort only (4-5)</button>
+        </div>
+      </div>
+      <div id="mm-results-wrap">
+        <div class="morning-results-label" id="mm-results-label" style="padding: 16px 0 10px; font-size:13px; color:var(--text2); font-weight:500;"></div>
+        <div class="outfit-grid" id="mm-grid"></div>
+        <div id="mm-empty" class="empty-state hidden">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <h3>no matches yet</h3>
+          <p>log more outfits to get suggestions here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'wardrobe_v1';
+let outfits = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+let currentPhoto = null;
+let currentComfort = 5;
+let currentColors = [];
+let currentTags = [];
+let filterWeather = '';
+let filterOccasion = '';
+let morningSelections = { weather: null, occasion: null, comfort: 'any' };
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(outfits)); }
+
+function comfortColor(v) {
+  return ['','#C4534A','#E07C3A','#E8B84B','#7AB648','#4A9B6F'][v] || '#ccc';
+}
+
+function comfortLabel(v) {
+  return ['','😬','😕','😐','😊','✨'][v] || '';
+}
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-AU', { weekday:'short', day:'numeric', month:'short' });
+}
+
+function renderOutfitCard(o, onclick) {
+  const card = document.createElement('div');
+  card.className = 'outfit-card';
+  card.onclick = onclick;
+  const wornTimes = outfits.filter(x => x.id !== o.id && false).length; // placeholder
+  card.innerHTML = `
+    ${o.photo
+      ? `<img class="outfit-photo" src="${o.photo}" alt="${o.name}" loading="lazy">`
+      : `<div class="outfit-photo-placeholder"><svg viewBox="0 0 24 24" stroke-width="1.4" fill="none" stroke="currentColor"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>`}
+    <div class="comfort-bar" style="background:${comfortColor(o.comfort)}"></div>
+    <div class="outfit-info">
+      <div class="outfit-name">${o.name || 'untitled look'}</div>
+      <div class="outfit-detail">${formatDate(o.date)}</div>
+      <div class="outfit-tags">
+        ${o.weather ? `<span class="otag">${o.weather}</span>` : ''}
+        ${o.occasion ? `<span class="otag">${o.occasion}</span>` : ''}
+        ${o.comfort ? `<span class="otag" style="background:${comfortColor(o.comfort)}22; color:${comfortColor(o.comfort)}">${comfortLabel(o.comfort)} ${o.comfort}/5</span>` : ''}
+      </div>
+    </div>`;
+  return card;
+}
+
+function renderGrid() {
+  const grid = document.getElementById('outfit-grid');
+  const emptyAll = document.getElementById('empty-outfits');
+  const emptyFilter = document.getElementById('empty-filter');
+  grid.innerHTML = '';
+
+  let filtered = outfits.filter(o => {
+    if (filterWeather && o.weather !== filterWeather) return false;
+    if (filterOccasion && o.occasion !== filterOccasion) return false;
+    return true;
+  }).sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  document.getElementById('outfit-count-label').textContent = `${outfits.length} outfit${outfits.length !== 1 ? 's' : ''} logged`;
+  document.getElementById('filtered-count').textContent = filtered.length < outfits.length ? `${filtered.length} shown` : '';
+
+  if (outfits.length === 0) { emptyAll.classList.remove('hidden'); emptyFilter.classList.add('hidden'); return; }
+  emptyAll.classList.add('hidden');
+  if (filtered.length === 0) { emptyFilter.classList.remove('hidden'); return; }
+  emptyFilter.classList.add('hidden');
+
+  filtered.forEach(o => {
+    grid.appendChild(renderOutfitCard(o, () => openDetail(o.id)));
+  });
+}
+
+function renderPieces() {
+  const list = document.getElementById('pieces-list');
+  const cats = ['top','bottom','shoes','outerwear','bag','accessories'];
+  const counts = {};
+  outfits.forEach(o => {
+    cats.forEach(cat => {
+      const val = o.pieces && o.pieces[cat];
+      if (val && val.trim()) {
+        const key = val.trim().toLowerCase();
+        if (!counts[key]) counts[key] = { name: val.trim(), cat, count: 0 };
+        counts[key].count++;
+      }
+    });
+  });
+
+  const sorted = Object.values(counts).sort((a,b) => b.count - a.count);
+  if (sorted.length === 0) {
+    list.innerHTML = `<div class="empty-state">
+      <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      <h3>nothing yet</h3><p>log outfits with piece details to see what carries your wardrobe.</p></div>`;
+    return;
+  }
+
+  const max = sorted[0].count;
+  list.innerHTML = '';
+  sorted.slice(0, 20).forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'piece-card';
+    card.innerHTML = `
+      <div class="piece-rank">${i+1}</div>
+      <div class="piece-info">
+        <div class="piece-name">${p.name}</div>
+        <div class="piece-cat">${p.cat}</div>
+        <div class="piece-bar-wrap"><div class="piece-bar" style="width:${Math.round(p.count/max*100)}%"></div></div>
+      </div>
+      <div class="piece-count">${p.count}×</div>`;
+    list.appendChild(card);
+  });
+}
+
+function openDetail(id) {
+  const o = outfits.find(x => x.id === id);
+  if (!o) return;
+  const content = document.getElementById('detail-content');
+  const pieces = o.pieces || {};
+  const pieceFields = [
+    ['top', pieces.top], ['bottom', pieces.bottom],
+    ['shoes', pieces.shoes], ['outerwear', pieces.outerwear],
+    ['bag', pieces.bag], ['accessories', pieces.accessories]
+  ].filter(([,v]) => v);
+
+  content.innerHTML = `
+    ${o.photo ? `<img class="detail-photo" src="${o.photo}" alt="${o.name}">` : `<div style="width:100%;height:200px;background:var(--bg2);"></div>`}
+    <div class="detail-body">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+        <div>
+          <div class="detail-name">${o.name || 'untitled look'}</div>
+          <div class="detail-date">${formatDate(o.date)}</div>
+        </div>
+        <div class="detail-comfort" style="background:${comfortColor(o.comfort)}22; color:${comfortColor(o.comfort)}">
+          ${comfortLabel(o.comfort)} ${o.comfort}/5
+        </div>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-field"><div class="detail-field-label">weather</div><div class="detail-field-value">${o.weather || '—'}</div></div>
+        <div class="detail-field"><div class="detail-field-label">occasion</div><div class="detail-field-value">${o.occasion || '—'}</div></div>
+        ${o.repeat ? `<div class="detail-field"><div class="detail-field-label">wear again?</div><div class="detail-field-value">${o.repeat}</div></div>` : ''}
+        ${o.colors && o.colors.length ? `<div class="detail-field"><div class="detail-field-label">colours</div><div class="detail-field-value">${o.colors.join(', ')}</div></div>` : ''}
+      </div>
+      ${pieceFields.length ? `
+        <div style="margin-top:16px;">
+          <div style="font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">pieces</div>
+          <div class="detail-grid">
+            ${pieceFields.map(([k,v]) => `<div class="detail-field"><div class="detail-field-label">${k}</div><div class="detail-field-value">${v}</div></div>`).join('')}
+          </div>
+        </div>` : ''}
+      ${o.tags && o.tags.length ? `<div class="detail-tags">${o.tags.map(t => `<span class="tag-pill">${t}</span>`).join('')}</div>` : ''}
+      ${o.notes ? `<div class="detail-notes">${o.notes}</div>` : ''}
+      <button class="delete-btn" onclick="deleteOutfit('${o.id}')">remove this outfit</button>
+    </div>`;
+  openModal('detail-modal');
+}
+
+function deleteOutfit(id) {
+  if (!confirm('remove this outfit?')) return;
+  outfits = outfits.filter(o => o.id !== id);
+  save();
+  closeModal('detail-modal');
+  renderGrid();
+  renderPieces();
+}
+
+// LOG FORM
+function openLog() {
+  currentPhoto = null;
+  currentComfort = 5;
+  currentColors = [];
+  currentTags = [];
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-notes').value = '';
+  document.getElementById('tag-input').value = '';
+  document.getElementById('tag-list').innerHTML = '';
+  document.getElementById('preview-img').style.display = 'none';
+  document.getElementById('upload-icon').style.display = 'block';
+  document.getElementById('upload-text').style.display = 'block';
+  document.querySelectorAll('.comfort-opt').forEach(el => {
+    el.classList.toggle('sel', el.dataset.v == '5');
+    el.textContent = el.dataset.v == '5' ? '5 ✓' : el.dataset.v;
+  });
+  document.querySelectorAll('.color-dot').forEach(el => el.classList.remove('sel'));
+  document.querySelectorAll('.piece-input').forEach(el => el.value = '');
+  openModal('log-modal');
+}
+
+function handlePhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    currentPhoto = e.target.result;
+    const img = document.getElementById('preview-img');
+    img.src = currentPhoto;
+    img.style.display = 'block';
+    document.getElementById('upload-icon').style.display = 'none';
+    document.getElementById('upload-text').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function pickComfort(v) {
+  currentComfort = v;
+  document.querySelectorAll('.comfort-opt').forEach(el => {
+    const isV = el.dataset.v == v;
+    el.classList.toggle('sel', isV);
+    el.textContent = isV ? `${v} ✓` : el.dataset.v;
+  });
+}
+
+function addTag() {
+  const input = document.getElementById('tag-input');
+  const val = input.value.trim();
+  if (!val || currentTags.includes(val)) { input.value = ''; return; }
+  currentTags.push(val);
+  input.value = '';
+  renderTagList();
+}
+
+document.getElementById('tag-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } });
+
+function renderTagList() {
+  const list = document.getElementById('tag-list');
+  list.innerHTML = currentTags.map(t => `<span class="tag-pill" onclick="removeTag('${t}')">${t} ✕</span>`).join('');
+}
+
+function removeTag(t) {
+  currentTags = currentTags.filter(x => x !== t);
+  renderTagList();
+}
+
+document.getElementById('color-picker').addEventListener('click', e => {
+  const dot = e.target.closest('.color-dot');
+  if (!dot) return;
+  const color = dot.dataset.color;
+  if (currentColors.includes(color)) {
+    currentColors = currentColors.filter(c => c !== color);
+    dot.classList.remove('sel');
+  } else {
+    currentColors.push(color);
+    dot.classList.add('sel');
+  }
+});
+
+function saveOutfit() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { document.getElementById('f-name').focus(); return; }
+  const o = {
+    id: Date.now().toString(),
+    date: new Date().toISOString(),
+    name,
+    photo: currentPhoto,
+    comfort: currentComfort,
+    weather: document.getElementById('f-weather').value,
+    occasion: document.getElementById('f-occasion').value,
+    repeat: document.getElementById('f-repeat').value,
+    colors: [...currentColors],
+    tags: [...currentTags],
+    notes: document.getElementById('f-notes').value.trim(),
+    pieces: {
+      top: document.getElementById('f-top').value.trim(),
+      bottom: document.getElementById('f-bottom').value.trim(),
+      shoes: document.getElementById('f-shoes').value.trim(),
+      outerwear: document.getElementById('f-outer').value.trim(),
+      bag: document.getElementById('f-bag').value.trim(),
+      accessories: document.getElementById('f-acc').value.trim(),
+    }
+  };
+  outfits.unshift(o);
+  save();
+  closeModal('log-modal');
+  renderGrid();
+  renderPieces();
+}
+
+// MORNING MODE
+function openMorning() {
+  morningSelections = { weather: null, occasion: null, comfort: 'any' };
+  document.querySelectorAll('#mm-weather .morning-opt, #mm-occasion .morning-opt').forEach(b => b.classList.remove('sel'));
+  document.querySelectorAll('#mm-comfort .morning-opt').forEach(b => b.classList.toggle('sel', b.dataset.v === 'any'));
+  runMorningFilter();
+  openModal('morning-modal');
+}
+
+document.querySelectorAll('#mm-weather .morning-opt, #mm-occasion .morning-opt, #mm-comfort .morning-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const g = btn.dataset.g;
+    document.querySelectorAll(`#mm-${g} .morning-opt`).forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    morningSelections[g] = btn.dataset.v;
+    runMorningFilter();
+  });
+});
+
+function runMorningFilter() {
+  const grid = document.getElementById('mm-grid');
+  const empty = document.getElementById('mm-empty');
+  const label = document.getElementById('mm-results-label');
+  grid.innerHTML = '';
+
+  let filtered = [...outfits].sort((a,b) => b.comfort - a.comfort || new Date(b.date) - new Date(a.date));
+
+  if (morningSelections.weather) filtered = filtered.filter(o => o.weather === morningSelections.weather);
+  if (morningSelections.occasion) filtered = filtered.filter(o => o.occasion === morningSelections.occasion);
+  if (morningSelections.comfort === 'high') filtered = filtered.filter(o => o.comfort >= 4);
+
+  // sort by comfort desc
+  filtered = filtered.filter(o => o.repeat !== 'no').slice(0, 8);
+
+  if (!morningSelections.weather && !morningSelections.occasion) {
+    label.textContent = 'pick a weather and occasion to filter';
+    return;
+  }
+
+  label.textContent = `${filtered.length} look${filtered.length !== 1 ? 's' : ''} for today`;
+  if (filtered.length === 0) { empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  filtered.forEach(o => grid.appendChild(renderOutfitCard(o, () => openDetail(o.id))));
+}
+
+// FILTERS
+document.querySelectorAll('[data-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const f = btn.dataset.filter;
+    document.querySelectorAll(`[data-filter="${f}"]`).forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (f === 'weather') filterWeather = btn.dataset.val;
+    if (f === 'occasion') filterOccasion = btn.dataset.val;
+    renderGrid();
+  });
+});
+
+// NAV + SCREENS
+function showScreen(name, btn) {
+  ['outfits','pieces','morning'].forEach(s => {
+    const el = document.getElementById('screen-'+s);
+    if (el) el.classList.toggle('hidden', s !== name);
+  });
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  document.querySelector('.fab').classList.toggle('hidden', name !== 'outfits');
+  if (name === 'pieces') renderPieces();
+}
+
+// MODALS
+function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(overlay.id); });
+});
+
+// INIT
+renderGrid();
+</script>
+</body>
+</html>
