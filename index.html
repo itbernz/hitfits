@@ -574,7 +574,17 @@ let filterOccasion = '';
 let searchQuery = '';
 let morningSelections = { weather: null, occasion: null, comfort: 'any' };
 
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(outfits)); }
+function save() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(outfits));
+  } catch(e) {
+    if (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED') {
+      alert('storage is getting full. your photos take up a lot of space. try removing some older outfits to free up room.');
+    } else {
+      alert('could not save: ' + e.message);
+    }
+  }
+}
 
 function onSearch(val) {
   searchQuery = val.trim().toLowerCase();
@@ -954,11 +964,11 @@ function openLog() {
   document.getElementById('preview-img').style.display = 'none';
   document.getElementById('upload-icon').style.display = 'block';
   document.getElementById('upload-text').style.display = 'block';
-  document.querySelectorAll('.comfort-opt').forEach(el => {
+  document.querySelectorAll('#log-modal .comfort-opt').forEach(el => {
     el.classList.toggle('sel', el.dataset.v == '5');
     el.textContent = el.dataset.v == '5' ? '5 ✓' : el.dataset.v;
   });
-  document.querySelectorAll('.color-dot').forEach(el => el.classList.remove('sel'));
+  document.querySelectorAll('#log-modal .color-dot').forEach(el => el.classList.remove('sel'));
   document.querySelectorAll('.piece-input').forEach(el => el.value = '');
   if (document.getElementById('f-under')) document.getElementById('f-under').value = '';
   if (document.getElementById('f-socks')) document.getElementById('f-socks').value = '';
@@ -982,7 +992,7 @@ function handlePhoto(input) {
 
 function pickComfort(v) {
   currentComfort = v;
-  document.querySelectorAll('.comfort-opt').forEach(el => {
+  document.querySelectorAll('#log-modal .comfort-opt').forEach(el => {
     const isV = el.dataset.v == v;
     el.classList.toggle('sel', isV);
     el.textContent = isV ? `${v} ✓` : el.dataset.v;
@@ -1024,43 +1034,47 @@ document.getElementById('color-picker').addEventListener('click', e => {
 });
 
 function saveOutfit() {
-  const nameEl = document.getElementById('f-name');
-  const name = nameEl.value.trim();
-  if (!name) {
-    nameEl.style.borderColor = 'var(--accent)';
-    nameEl.placeholder = 'give this look a name first…';
-    nameEl.focus();
-    setTimeout(() => { nameEl.style.borderColor = ''; nameEl.placeholder = 'e.g. work Tuesday, dinner at Twilight...'; }, 2500);
-    return;
-  }
-  const o = {
-    id: Date.now().toString(),
-    date: new Date().toISOString(),
-    name,
-    photo: currentPhoto,
-    comfort: currentComfort,
-    weather: document.getElementById('f-weather').value,
-    occasion: document.getElementById('f-occasion').value,
-    repeat: document.getElementById('f-repeat').value,
-    colors: [...currentColors],
-    tags: [...currentTags],
-    notes: document.getElementById('f-notes').value.trim(),
-    pieces: {
-      undershirt: document.getElementById('f-under').value.trim(),
-      top: document.getElementById('f-top').value.trim(),
-      bottom: document.getElementById('f-bottom').value.trim(),
-      shoes: document.getElementById('f-shoes').value.trim(),
-      outerwear: document.getElementById('f-outer').value.trim(),
-      socks: document.getElementById('f-socks').value.trim(),
-      bag: document.getElementById('f-bag').value.trim(),
-      accessories: document.getElementById('f-acc').value.trim(),
+  try {
+    const nameEl = document.getElementById('f-name');
+    const name = nameEl.value.trim();
+    if (!name) {
+      nameEl.style.borderColor = 'var(--accent)';
+      nameEl.placeholder = 'give this look a name first';
+      nameEl.focus();
+      setTimeout(() => { nameEl.style.borderColor = ''; nameEl.placeholder = 'e.g. work Tuesday, dinner out...'; }, 2500);
+      return;
     }
-  };
-  outfits.unshift(o);
-  save();
-  closeModal('log-modal');
-  renderGrid();
-  renderPieces();
+    const o = {
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      name,
+      photo: currentPhoto,
+      comfort: currentComfort,
+      weather: document.getElementById('f-weather').value,
+      occasion: document.getElementById('f-occasion').value,
+      repeat: document.getElementById('f-repeat').value,
+      colors: [...currentColors],
+      tags: [...currentTags],
+      notes: document.getElementById('f-notes').value.trim(),
+      pieces: {
+        undershirt: document.getElementById('f-under').value.trim(),
+        top: document.getElementById('f-top').value.trim(),
+        bottom: document.getElementById('f-bottom').value.trim(),
+        shoes: document.getElementById('f-shoes').value.trim(),
+        outerwear: document.getElementById('f-outer').value.trim(),
+        socks: document.getElementById('f-socks').value.trim(),
+        bag: document.getElementById('f-bag').value.trim(),
+        accessories: document.getElementById('f-acc').value.trim(),
+      }
+    };
+    outfits.unshift(o);
+    save();
+    closeModal('log-modal');
+    renderGrid();
+    renderPieces();
+  } catch(err) {
+    alert('something went wrong saving: ' + err.message);
+  }
 }
 
 // MORNING MODE
