@@ -48,6 +48,17 @@
   .morning-banner-text span { color: rgba(255,255,255,0.75); font-size: 12px; }
   .morning-banner-arrow { color: rgba(255,255,255,0.7); font-size: 18px; }
 
+  /* SEARCH */
+  .search-wrap { padding: 0 16px 14px; position: relative; }
+  .search-input { width: 100%; padding: 11px 36px 11px 38px; border-radius: 12px; border: 1px solid var(--border2); background: var(--card); color: var(--text); font-size: 15px; font-family: inherit; -webkit-appearance: none; }
+  .search-input::placeholder { color: var(--text3); }
+  .search-input:focus { outline: none; border-color: var(--accent); }
+  .search-icon { position: absolute; left: 28px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+  .search-icon svg { width: 16px; height: 16px; stroke: var(--text3); fill: none; stroke-width: 2; stroke-linecap: round; }
+  .search-clear { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); background: var(--bg2); border: none; color: var(--text3); width: 20px; height: 20px; border-radius: 50%; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .search-hits { padding: 0 16px 6px; font-size: 12px; color: var(--accent); min-height: 18px; }
+  mark { background: rgba(196,113,74,0.25); color: var(--accent); border-radius: 2px; padding: 0 1px; font-style: normal; }
+
   /* FILTERS */
   .filter-section { padding: 0 16px 12px; }
   .filter-label { font-size: 11px; color: var(--text3); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
@@ -186,6 +197,13 @@
     </div>
     <div class="morning-banner-arrow">›</div>
   </div>
+
+  <div class="search-wrap">
+    <div class="search-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
+    <input class="search-input" type="search" id="search-input" placeholder="search brand, colour, style, tag…" oninput="onSearch(this.value)" />
+    <button class="search-clear hidden" id="search-clear" onclick="clearSearch()" aria-label="clear search">✕</button>
+  </div>
+  <div class="search-hits" id="search-hits"></div>
 
   <div class="filter-section">
     <div class="filter-label">filter by weather</div>
@@ -376,12 +394,23 @@
 
       <div class="field-row">
         <div class="field-group">
+          <label class="field-label">undershirt / base layer</label>
+          <input class="field-input piece-input" type="text" id="f-under" data-cat="undershirt" placeholder="white cotton tee, singlet…" />
+        </div>
+        <div class="field-group">
           <label class="field-label">top</label>
           <input class="field-input piece-input" type="text" id="f-top" data-cat="top" placeholder="white linen blouse" />
         </div>
+      </div>
+
+      <div class="field-row">
         <div class="field-group">
           <label class="field-label">bottom</label>
           <input class="field-input piece-input" type="text" id="f-bottom" data-cat="bottom" placeholder="wide leg jeans" />
+        </div>
+        <div class="field-group">
+          <label class="field-label">outerwear</label>
+          <input class="field-input piece-input" type="text" id="f-outer" data-cat="outerwear" placeholder="beige trench" />
         </div>
       </div>
 
@@ -391,8 +420,8 @@
           <input class="field-input piece-input" type="text" id="f-shoes" data-cat="shoes" placeholder="white sneakers" />
         </div>
         <div class="field-group">
-          <label class="field-label">outerwear</label>
-          <input class="field-input piece-input" type="text" id="f-outer" data-cat="outerwear" placeholder="beige trench" />
+          <label class="field-label">socks / hosiery</label>
+          <input class="field-input piece-input" type="text" id="f-socks" data-cat="socks" placeholder="white no-shows, tights…" />
         </div>
       </div>
 
@@ -530,9 +559,42 @@ let currentColors = [];
 let currentTags = [];
 let filterWeather = '';
 let filterOccasion = '';
+let searchQuery = '';
 let morningSelections = { weather: null, occasion: null, comfort: 'any' };
 
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(outfits)); }
+
+function onSearch(val) {
+  searchQuery = val.trim().toLowerCase();
+  document.getElementById('search-clear').classList.toggle('hidden', !val);
+  renderGrid();
+}
+
+function clearSearch() {
+  searchQuery = '';
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-clear').classList.add('hidden');
+  document.getElementById('search-hits').textContent = '';
+  renderGrid();
+}
+
+function outfitMatchesSearch(o, q) {
+  if (!q) return true;
+  const fields = [
+    o.name, o.weather, o.occasion, o.notes, o.repeat,
+    ...(o.colors || []),
+    ...(o.tags || []),
+    ...Object.values(o.pieces || {})
+  ].filter(Boolean).join(' ').toLowerCase();
+  return fields.includes(q);
+}
+
+function highlight(text, q) {
+  if (!q || !text) return text || '';
+  const idx = text.toLowerCase().indexOf(q);
+  if (idx === -1) return text;
+  return text.slice(0, idx) + '<mark>' + text.slice(idx, idx + q.length) + '</mark>' + text.slice(idx + q.length);
+}
 
 function comfortColor(v) {
   return ['','#C4534A','#E07C3A','#E8B84B','#7AB648','#4A9B6F'][v] || '#ccc';
@@ -558,7 +620,7 @@ function renderOutfitCard(o, onclick) {
       : `<div class="outfit-photo-placeholder"><svg viewBox="0 0 24 24" stroke-width="1.4" fill="none" stroke="currentColor"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>`}
     <div class="comfort-bar" style="background:${comfortColor(o.comfort)}"></div>
     <div class="outfit-info">
-      <div class="outfit-name">${o.name || 'untitled look'}</div>
+      <div class="outfit-name">${highlight(o.name || 'untitled look', searchQuery)}</div>
       <div class="outfit-detail">${formatDate(o.date)}</div>
       <div class="outfit-tags">
         ${o.weather ? `<span class="otag">${o.weather}</span>` : ''}
@@ -573,16 +635,27 @@ function renderGrid() {
   const grid = document.getElementById('outfit-grid');
   const emptyAll = document.getElementById('empty-outfits');
   const emptyFilter = document.getElementById('empty-filter');
+  const hitsEl = document.getElementById('search-hits');
   grid.innerHTML = '';
 
   let filtered = outfits.filter(o => {
     if (filterWeather && o.weather !== filterWeather) return false;
     if (filterOccasion && o.occasion !== filterOccasion) return false;
+    if (searchQuery && !outfitMatchesSearch(o, searchQuery)) return false;
     return true;
   }).sort((a,b) => new Date(b.date) - new Date(a.date));
 
   document.getElementById('outfit-count-label').textContent = `${outfits.length} outfit${outfits.length !== 1 ? 's' : ''} logged`;
-  document.getElementById('filtered-count').textContent = filtered.length < outfits.length ? `${filtered.length} shown` : '';
+
+  if (searchQuery) {
+    hitsEl.textContent = filtered.length
+      ? `${filtered.length} result${filtered.length !== 1 ? 's' : ''} for "${searchQuery}"`
+      : '';
+  } else {
+    hitsEl.textContent = '';
+  }
+
+  document.getElementById('filtered-count').textContent = (!searchQuery && filtered.length < outfits.length) ? `${filtered.length} shown` : '';
 
   if (outfits.length === 0) { emptyAll.classList.remove('hidden'); emptyFilter.classList.add('hidden'); return; }
   emptyAll.classList.add('hidden');
@@ -640,8 +713,9 @@ function openDetail(id) {
   const content = document.getElementById('detail-content');
   const pieces = o.pieces || {};
   const pieceFields = [
-    ['top', pieces.top], ['bottom', pieces.bottom],
-    ['shoes', pieces.shoes], ['outerwear', pieces.outerwear],
+    ['undershirt', pieces.undershirt], ['top', pieces.top],
+    ['bottom', pieces.bottom], ['outerwear', pieces.outerwear],
+    ['shoes', pieces.shoes], ['socks', pieces.socks],
     ['bag', pieces.bag], ['accessories', pieces.accessories]
   ].filter(([,v]) => v);
 
@@ -705,6 +779,8 @@ function openLog() {
   });
   document.querySelectorAll('.color-dot').forEach(el => el.classList.remove('sel'));
   document.querySelectorAll('.piece-input').forEach(el => el.value = '');
+  if (document.getElementById('f-under')) document.getElementById('f-under').value = '';
+  if (document.getElementById('f-socks')) document.getElementById('f-socks').value = '';
   openModal('log-modal');
 }
 
@@ -782,10 +858,12 @@ function saveOutfit() {
     tags: [...currentTags],
     notes: document.getElementById('f-notes').value.trim(),
     pieces: {
+      undershirt: document.getElementById('f-under').value.trim(),
       top: document.getElementById('f-top').value.trim(),
       bottom: document.getElementById('f-bottom').value.trim(),
       shoes: document.getElementById('f-shoes').value.trim(),
       outerwear: document.getElementById('f-outer').value.trim(),
+      socks: document.getElementById('f-socks').value.trim(),
       bag: document.getElementById('f-bag').value.trim(),
       accessories: document.getElementById('f-acc').value.trim(),
     }
