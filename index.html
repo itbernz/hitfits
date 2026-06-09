@@ -492,10 +492,22 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-header" style="position:absolute; top:0; left:0; right:0; background:transparent; z-index:10;">
-      <span></span>
-      <button class="modal-close" onclick="closeModal('detail-modal')" style="background:rgba(255,255,255,0.85);">✕</button>
+      <button class="modal-close" onclick="openEdit(currentDetailId)" style="background:rgba(28,26,24,0.6); color:white; font-size:13px; width:auto; padding:0 12px; border-radius:20px; font-family:inherit;">edit</button>
+      <button class="modal-close" onclick="closeModal('detail-modal')" style="background:rgba(28,26,24,0.6); color:white;">✕</button>
     </div>
     <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- EDIT OUTFIT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">edit this look</span>
+      <button class="modal-close" onclick="closeModal('edit-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="edit-body"></div>
   </div>
 </div>
 
@@ -713,7 +725,10 @@ function renderPieces() {
   });
 }
 
+let currentDetailId = null;
+
 function openDetail(id) {
+  currentDetailId = id;
   const o = outfits.find(x => x.id === id);
   if (!o) return;
   const content = document.getElementById('detail-content');
@@ -726,11 +741,11 @@ function openDetail(id) {
   ].filter(([,v]) => v);
 
   content.innerHTML = `
-    ${o.photo ? `<img class="detail-photo" src="${o.photo}" alt="${o.name}">` : `<div style="width:100%;height:200px;background:var(--bg2);"></div>`}
+    ${o.photo ? `<img class="detail-photo" src="${o.photo}" alt="${escapeHtml(o.name)}">` : `<div style="width:100%;height:200px;background:var(--bg2);"></div>`}
     <div class="detail-body">
       <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
         <div>
-          <div class="detail-name">${o.name || 'untitled look'}</div>
+          <div class="detail-name">${escapeHtml(o.name || 'untitled look')}</div>
           <div class="detail-date">${formatDate(o.date)}</div>
         </div>
         <div class="detail-comfort" style="background:${comfortColor(o.comfort)}22; color:${comfortColor(o.comfort)}">
@@ -738,20 +753,20 @@ function openDetail(id) {
         </div>
       </div>
       <div class="detail-grid">
-        <div class="detail-field"><div class="detail-field-label">weather</div><div class="detail-field-value">${o.weather || '—'}</div></div>
-        <div class="detail-field"><div class="detail-field-label">occasion</div><div class="detail-field-value">${o.occasion || '—'}</div></div>
-        ${o.repeat ? `<div class="detail-field"><div class="detail-field-label">wear again?</div><div class="detail-field-value">${o.repeat}</div></div>` : ''}
-        ${o.colors && o.colors.length ? `<div class="detail-field"><div class="detail-field-label">colours</div><div class="detail-field-value">${o.colors.join(', ')}</div></div>` : ''}
+        <div class="detail-field"><div class="detail-field-label">weather</div><div class="detail-field-value">${escapeHtml(o.weather || '—')}</div></div>
+        <div class="detail-field"><div class="detail-field-label">occasion</div><div class="detail-field-value">${escapeHtml(o.occasion || '—')}</div></div>
+        ${o.repeat ? `<div class="detail-field"><div class="detail-field-label">wear again?</div><div class="detail-field-value">${escapeHtml(o.repeat)}</div></div>` : ''}
+        ${o.colors && o.colors.length ? `<div class="detail-field"><div class="detail-field-label">colours</div><div class="detail-field-value">${escapeHtml(o.colors.join(', '))}</div></div>` : ''}
       </div>
       ${pieceFields.length ? `
         <div style="margin-top:16px;">
           <div style="font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px;">pieces</div>
           <div class="detail-grid">
-            ${pieceFields.map(([k,v]) => `<div class="detail-field"><div class="detail-field-label">${k}</div><div class="detail-field-value">${v}</div></div>`).join('')}
+            ${pieceFields.map(([k,v]) => `<div class="detail-field"><div class="detail-field-label">${escapeHtml(k)}</div><div class="detail-field-value">${escapeHtml(v)}</div></div>`).join('')}
           </div>
         </div>` : ''}
-      ${o.tags && o.tags.length ? `<div class="detail-tags">${o.tags.map(t => `<span class="tag-pill">${t}</span>`).join('')}</div>` : ''}
-      ${o.notes ? `<div class="detail-notes">${o.notes}</div>` : ''}
+      ${o.tags && o.tags.length ? `<div class="detail-tags">${o.tags.map(t => `<span class="tag-pill">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+      ${o.notes ? `<div class="detail-notes">${escapeHtml(o.notes)}</div>` : ''}
       <button class="delete-btn" data-delete-id="${o.id}" onclick="deleteOutfit(this.dataset.deleteId)">remove this outfit</button>
     </div>`;
   openModal('detail-modal');
@@ -764,6 +779,166 @@ function deleteOutfit(id) {
   closeModal('detail-modal');
   renderGrid();
   renderPieces();
+}
+
+function openEdit(id) {
+  const o = outfits.find(x => x.id === id);
+  if (!o) return;
+  const pieces = o.pieces || {};
+  const colorsList = ['black','white','cream','grey','brown','navy','blue','green','rust','red','pink','yellow','purple'];
+  const colorHex = { black:'#1C1A18', white:'#2a3244', cream:'#F0E8D5', grey:'#9B9590', brown:'#7B5B3A', navy:'#1B2A4A', blue:'#4A7FB5', green:'#4A7B5A', rust:'#C4714A', red:'#C4534A', pink:'#D4789A', yellow:'#E8C84B', purple:'#7B5BAA' };
+
+  window._editTags = [...(o.tags || [])];
+  window._editColors = new Set(o.colors || []);
+  window._editComfort = o.comfort || 5;
+
+  document.getElementById('edit-body').innerHTML = `
+    <div class="field-group">
+      <label class="field-label">name or occasion</label>
+      <input class="field-input" type="text" id="e-name" value="${escapeHtml(o.name || '')}" placeholder="e.g. work Tuesday..." />
+    </div>
+    <div class="field-group">
+      <label class="field-label">comfort (1 = rough, 5 = perfect)</label>
+      <div class="comfort-picker" id="e-comfort-picker">
+        ${[1,2,3,4,5].map(v => `<div class="comfort-opt${o.comfort==v?' sel':''}" data-v="${v}" onclick="pickEditComfort(${v})">${v}${o.comfort==v?' ✓':''}</div>`).join('')}
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">weather</label>
+        <select class="field-input" id="e-weather">
+          ${['hot','warm','mild','cool','cold','rainy'].map(w => `<option value="${w}"${o.weather===w?' selected':''}>${w}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label">occasion</label>
+        <select class="field-input" id="e-occasion">
+          ${['casual','work','smart casual','going out','cosy','active'].map(oc => `<option value="${oc}"${o.occasion===oc?' selected':''}>${oc}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="section-divider">pieces</div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">undershirt</label><input class="field-input" id="e-under" type="text" value="${escapeHtml(pieces.undershirt||'')}" placeholder="singlet, base layer..." /></div>
+      <div class="field-group"><label class="field-label">top</label><input class="field-input" id="e-top" type="text" value="${escapeHtml(pieces.top||'')}" placeholder="white linen blouse" /></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">bottom</label><input class="field-input" id="e-bottom" type="text" value="${escapeHtml(pieces.bottom||'')}" placeholder="wide leg jeans" /></div>
+      <div class="field-group"><label class="field-label">outerwear</label><input class="field-input" id="e-outer" type="text" value="${escapeHtml(pieces.outerwear||'')}" placeholder="beige trench" /></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">shoes</label><input class="field-input" id="e-shoes" type="text" value="${escapeHtml(pieces.shoes||'')}" placeholder="white sneakers" /></div>
+      <div class="field-group"><label class="field-label">socks / hosiery</label><input class="field-input" id="e-socks" type="text" value="${escapeHtml(pieces.socks||'')}" placeholder="white no-shows" /></div>
+    </div>
+    <div class="field-row">
+      <div class="field-group"><label class="field-label">bag</label><input class="field-input" id="e-bag" type="text" value="${escapeHtml(pieces.bag||'')}" placeholder="tote / clutch" /></div>
+      <div class="field-group"><label class="field-label">accessories</label><input class="field-input" id="e-acc" type="text" value="${escapeHtml(pieces.accessories||'')}" placeholder="gold hoops, watch" /></div>
+    </div>
+    <div class="section-divider">colours</div>
+    <div class="field-group">
+      <div class="color-dots" id="e-color-picker">
+        ${colorsList.map(c => `<div class="color-dot${window._editColors.has(c)?' sel':''}" data-color="${c}" style="background:${colorHex[c]}${c==='white'?';border:1px solid rgba(255,255,255,0.15)':''}" title="${c}" onclick="toggleEditColor(this,'${c}')"></div>`).join('')}
+      </div>
+    </div>
+    <div class="section-divider">tags &amp; notes</div>
+    <div class="field-group">
+      <label class="field-label">tags</label>
+      <div class="tag-input-wrap">
+        <input class="field-input" type="text" id="e-tag-input" placeholder="add a tag..." />
+        <button class="tag-add-btn" onclick="addEditTag()">+</button>
+      </div>
+      <div class="tag-list" id="e-tag-list"></div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">notes</label>
+      <input class="field-input" type="text" id="e-notes" value="${escapeHtml(o.notes||'')}" placeholder="got compliments, wore again..." />
+    </div>
+    <div class="field-group">
+      <label class="field-label">wear again?</label>
+      <select class="field-input" id="e-repeat">
+        ${[['yes','yes, definitely'],['maybe','maybe, tweaked'],['no','no, not again']].map(([v,l]) => `<option value="${v}"${o.repeat===v?' selected':''}>${l}</option>`).join('')}
+      </select>
+    </div>
+    <button class="save-btn" onclick="saveEdit('${id}')">save changes</button>
+  `;
+
+  renderEditTagList();
+  document.getElementById('e-tag-input').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addEditTag(); } });
+  closeModal('detail-modal');
+  openModal('edit-modal');
+}
+
+function pickEditComfort(v) {
+  window._editComfort = v;
+  document.querySelectorAll('#e-comfort-picker .comfort-opt').forEach(el => {
+    const isV = el.dataset.v == v;
+    el.classList.toggle('sel', isV);
+    el.textContent = isV ? `${v} ✓` : el.dataset.v;
+  });
+}
+
+function toggleEditColor(el, color) {
+  if (window._editColors.has(color)) { window._editColors.delete(color); el.classList.remove('sel'); }
+  else { window._editColors.add(color); el.classList.add('sel'); }
+}
+
+function addEditTag() {
+  const input = document.getElementById('e-tag-input');
+  const val = input.value.trim();
+  if (!val || window._editTags.includes(val)) { input.value = ''; return; }
+  window._editTags.push(val);
+  input.value = '';
+  renderEditTagList();
+}
+
+function removeEditTag(t) {
+  window._editTags = window._editTags.filter(x => x !== t);
+  renderEditTagList();
+}
+
+function renderEditTagList() {
+  const list = document.getElementById('e-tag-list');
+  if (!list) return;
+  list.innerHTML = window._editTags.map(t => `<span class="tag-pill" onclick="removeEditTag(this.dataset.t)" data-t="${escapeHtml(t)}">${escapeHtml(t)} ✕</span>`).join('');
+}
+
+function saveEdit(id) {
+  const idx = outfits.findIndex(o => o.id === id);
+  if (idx === -1) return;
+  const nameEl = document.getElementById('e-name');
+  const name = nameEl.value.trim();
+  if (!name) {
+    nameEl.style.borderColor = 'var(--accent)';
+    nameEl.focus();
+    setTimeout(() => nameEl.style.borderColor = '', 2000);
+    return;
+  }
+  outfits[idx] = {
+    ...outfits[idx],
+    name,
+    comfort: window._editComfort,
+    weather: document.getElementById('e-weather').value,
+    occasion: document.getElementById('e-occasion').value,
+    repeat: document.getElementById('e-repeat').value,
+    colors: [...window._editColors],
+    tags: [...window._editTags],
+    notes: document.getElementById('e-notes').value.trim(),
+    pieces: {
+      undershirt: document.getElementById('e-under').value.trim(),
+      top: document.getElementById('e-top').value.trim(),
+      bottom: document.getElementById('e-bottom').value.trim(),
+      outerwear: document.getElementById('e-outer').value.trim(),
+      shoes: document.getElementById('e-shoes').value.trim(),
+      socks: document.getElementById('e-socks').value.trim(),
+      bag: document.getElementById('e-bag').value.trim(),
+      accessories: document.getElementById('e-acc').value.trim(),
+    }
+  };
+  save();
+  closeModal('edit-modal');
+  renderGrid();
+  renderPieces();
+  openDetail(id);
 }
 
 // LOG FORM
