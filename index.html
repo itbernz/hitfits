@@ -987,6 +987,7 @@ function openLog() {
 
 const CLOUDINARY_CLOUD = 'dyodggss1q';
 const CLOUDINARY_PRESET = 'hit-fits';
+const CLOUDINARY_API_KEY = '655442736659968';
 
 async function handlePhoto(input) {
   const file = input.files[0];
@@ -1004,13 +1005,17 @@ async function handlePhoto(input) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', CLOUDINARY_PRESET);
+    formData.append('api_key', CLOUDINARY_API_KEY);
 
     const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
       method: 'POST',
       body: formData
     });
 
-    if (!res.ok) throw new Error(`upload failed: ${res.status}`);
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(`${res.status}: ${errData.error?.message || 'unknown error'}`);
+    }
     const data = await res.json();
     currentPhoto = data.secure_url;
 
