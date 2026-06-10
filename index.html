@@ -29,6 +29,8 @@
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, 'Helvetica Neue', sans-serif; min-height: 100vh; max-width: 480px; margin: 0 auto; padding-bottom: 90px; }
 
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   /* NAV */
   .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--card); border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
   .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 0 8px; border: none; background: none; color: var(--text3); font-size: 10px; letter-spacing: 0.04em; cursor: pointer; transition: color 0.15s; }
@@ -346,6 +348,10 @@
         <input type="file" accept="image/*" id="photo-input" onchange="handlePhoto(this)">
         <svg viewBox="0 0 24 24" id="upload-icon"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         <span id="upload-text">tap to add photo</span>
+        <div id="upload-progress" style="display:none; position:relative; z-index:1; text-align:center;">
+          <div style="width:40px; height:40px; border:3px solid var(--border2); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 8px;"></div>
+          <span style="font-size:13px; color:var(--text2);">uploading...</span>
+        </div>
         <img id="preview-img" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:12px;">
       </div>
 
@@ -964,6 +970,10 @@ function openLog() {
   document.getElementById('preview-img').style.display = 'none';
   document.getElementById('upload-icon').style.display = 'block';
   document.getElementById('upload-text').style.display = 'block';
+  document.getElementById('upload-text').textContent = 'tap to add photo';
+  document.getElementById('upload-progress').style.display = 'none';
+  document.querySelector('#log-modal .save-btn').disabled = false;
+  document.querySelector('#log-modal .save-btn').style.opacity = '1';
   document.querySelectorAll('#log-modal .comfort-opt').forEach(el => {
     el.classList.toggle('sel', el.dataset.v == '5');
     el.textContent = el.dataset.v == '5' ? '5 ✓' : el.dataset.v;
@@ -975,19 +985,51 @@ function openLog() {
   openModal('log-modal');
 }
 
-function handlePhoto(input) {
+const CLOUDINARY_CLOUD = 'dyodggss1q';
+const CLOUDINARY_PRESET = 'hit-fits';
+
+async function handlePhoto(input) {
   const file = input.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    currentPhoto = e.target.result;
+
+  // show spinner, hide other elements, disable save
+  document.getElementById('upload-icon').style.display = 'none';
+  document.getElementById('upload-text').style.display = 'none';
+  document.getElementById('upload-progress').style.display = 'block';
+  document.getElementById('preview-img').style.display = 'none';
+  document.querySelector('.save-btn').disabled = true;
+  document.querySelector('.save-btn').style.opacity = '0.5';
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_PRESET);
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!res.ok) throw new Error(`upload failed: ${res.status}`);
+    const data = await res.json();
+    currentPhoto = data.secure_url;
+
+    // show preview
     const img = document.getElementById('preview-img');
     img.src = currentPhoto;
     img.style.display = 'block';
-    document.getElementById('upload-icon').style.display = 'none';
-    document.getElementById('upload-text').style.display = 'none';
-  };
-  reader.readAsDataURL(file);
+    document.getElementById('upload-progress').style.display = 'none';
+
+  } catch(err) {
+    document.getElementById('upload-progress').style.display = 'none';
+    document.getElementById('upload-icon').style.display = 'block';
+    document.getElementById('upload-text').style.display = 'block';
+    document.getElementById('upload-text').textContent = 'upload failed, tap to retry';
+    alert('photo upload failed: ' + err.message);
+  } finally {
+    document.querySelector('.save-btn').disabled = false;
+    document.querySelector('.save-btn').style.opacity = '1';
+  }
 }
 
 function pickComfort(v) {
